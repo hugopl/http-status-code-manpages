@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "yaml"
+require "fileutils"
+require "ap"
+
+TEMPLATE = <<-EOF
+.\\" Copyright  © CC BY-SA Mozilla Contributors <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status>
+.\\"
+.\\" Text is available under the Creative Commons Attribution-ShareAlike License; additional terms may apply.
+.\\" Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc., a non-profit organization.
+.\\"
+.TH %{code} 7  "" "" "HTTP Status Code Manual"
+.SH CODE
+%{code} \- %{message}
+.SH CATEGORY
+%{category}
+.SH DESCRIPTION
+%{description}
+EOF
+
+BUILD_DIR = "./build"
+FileUtils.mkdir_p(BUILD_DIR)
+
+codes = YAML.safe_load(File.read("./data/code_descriptions.yml"))
+codes.each do |code, info|
+  info = info.transform_keys!(&:to_sym)
+  info[:code] = code
+  File.open("#{BUILD_DIR}/#{code}.7", "w") do |f|
+    f.printf(TEMPLATE, info)
+  end
+end
+puts "#{codes.size} man pages created at #{BUILD_DIR}."
