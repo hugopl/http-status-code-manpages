@@ -3,7 +3,6 @@
 
 require "yaml"
 require "fileutils"
-require "ap"
 
 TEMPLATE = <<-EOF
 .\\" Copyright  © CC BY-SA Mozilla Contributors <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status>
