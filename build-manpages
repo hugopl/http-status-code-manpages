@@ -4,12 +4,23 @@
 require "yaml"
 require "fileutils"
 
-TEMPLATE = <<-EOF
+CATEGORIES = {
+  1 => "The request was received, continuing process.",
+  2 => "The request was successfully received, understood, and accepted.",
+  3 => "Further action needs to be taken in order to complete the request.",
+  4 => "The request contains bad syntax or cannot be fulfilled.",
+  5 => "The server failed to fulfil an apparently valid request."
+}
+
+COPYRIGHT = <<-EOF
 .\\" Copyright  © CC BY-SA Mozilla Contributors <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status>
 .\\"
 .\\" Text is available under the Creative Commons Attribution-ShareAlike License; additional terms may apply.
 .\\" Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc., a non-profit organization.
 .\\"
+EOF
+
+TEMPLATE = <<-EOF
 .TH %{code} 7  "" "" "HTTP Status Code Manual"
 .SH CODE
 %{code} \- %{message}
@@ -17,6 +28,22 @@ TEMPLATE = <<-EOF
 %{category}
 .SH DESCRIPTION
 %{description}
+.SH CONFORMING TO
+RFC 7231 - \\%%https://datatracker.ietf.org/doc/html/rfc7231.
+.SH SEE ALSO
+.BR http-codes (7)
+EOF
+
+HTTP_CODES_HEADER = <<-EOF
+.TH http-codes 7  "" "" "HTTP Status Code Manual"
+.SH HTTP RESPONSE STATUS CODES
+HTTP response status codes indicate whether a specific HTTP request has been successfully completed.
+Responses are grouped in the five classes listed bellow.
+EOF
+
+HTTP_CODES_FOOTER = <<-EOF
+.SH SEE ALSO
+RFC 7231 - \\%https://datatracker.ietf.org/doc/html/rfc7231.
 EOF
 
 BUILD_DIR = "./build"
@@ -26,8 +53,28 @@ codes = YAML.safe_load(File.read("./data/code_descriptions.yml"))
 codes.each do |code, info|
   info = info.transform_keys!(&:to_sym)
   info[:code] = code
-  File.open("#{BUILD_DIR}/#{code}.7", "w") do |f|
-    f.printf(TEMPLATE, info)
+  File.open("#{BUILD_DIR}/#{code}.7", "w") do |fp|
+    fp.puts(COPYRIGHT)
+    fp.printf(TEMPLATE, info)
   end
 end
-puts "#{codes.size} man pages created at #{BUILD_DIR}."
+
+File.open("#{BUILD_DIR}/http-codes.7", "w") do |fp|
+  fp.puts(COPYRIGHT)
+  fp.puts(HTTP_CODES_HEADER)
+  last_category = nil
+  codes.each do |code, info|
+    category = info[:category]
+    if category != last_category
+      fp.puts(".SH #{category.upcase}")
+      fp.puts(CATEGORIES[code/100])
+      last_category = category
+    end
+    fp.puts ".TP\n" \
+             ".B #{code}\n" \
+             "#{info[:message]}"
+  end
+  fp.puts(HTTP_CODES_FOOTER)
+end
+
+puts "#{codes.size + 1} man pages created at #{BUILD_DIR}."
