@@ -19,7 +19,8 @@ $ man 7 500
 You need ruby to generate the man pages, after this you just need the manpage reader.
 
 ```
-$ make install
+$ make
+$ sudo make install
 ```
 
 # Installing on ArchLinux
